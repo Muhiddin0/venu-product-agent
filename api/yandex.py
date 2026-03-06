@@ -178,7 +178,12 @@ class ProductImage:
         data = response.json()
 
         images = self.extract_images(data=data)
+        pure_images = []
 
+        for image in images:
+            if not "olxcdn.com" in image["url"]:
+                pure_images.append(image["url"])
+        
         return images
 
     def extract_images(self, data):
