@@ -1,5 +1,7 @@
 """Application configuration management."""
 
+import json
+from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -77,3 +79,34 @@ settings = Settings()
 # Validate required settings
 if not settings.openai_api_key:
     raise RuntimeError("OPENAI_API_KEY not found. Please add it to .env file.")
+
+
+def get_image_config() -> dict:
+    """Load image config from config.json."""
+    config_path = Path(__file__).parent / "config.json"
+    if config_path.exists():
+        with open(config_path) as f:
+            data = json.load(f)
+            return data.get("image", {})
+    return {}
+
+
+def get_not_allowed_sites() -> List[str]:
+    """Get list of sites whose images should be filtered out from search results."""
+    return get_image_config().get("not_allowed_sites", [])
+
+
+def load_full_config() -> dict:
+    """Load full config from config.json."""
+    config_path = Path(__file__).parent / "config.json"
+    if config_path.exists():
+        with open(config_path) as f:
+            return json.load(f)
+    return {}
+
+
+def save_full_config(data: dict) -> None:
+    """Save full config to config.json."""
+    config_path = Path(__file__).parent / "config.json"
+    with open(config_path, "w") as f:
+        json.dump(data, f, indent=2)

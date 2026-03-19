@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from agent.image import generate_poster
 from api_models import ErrorResponse, ProductGenerateRequest, ProductGenerateResponse
-from core.config import settings
+from core.config import load_full_config, save_full_config, settings
 from core.constants import CORS_ALLOW_ORIGINS
 from services.product_service import ProductService
 from utils.logging_config import setup_logging
@@ -137,6 +137,78 @@ EXCEL_FILE_PATH = "api/mxik-codes.xlsx"
 async def mxik_codes_page(request: Request):
     """Render the MXIK management page."""
     return templates.TemplateResponse("mxik.html", {"request": request})
+
+
+# Config CRUD (admin)
+@app.get("/config", tags=["Config Admin"])
+async def config_page(request: Request):
+    """Config boshqaruv sahifasi."""
+    return templates.TemplateResponse("admin-config.html", {"request": request})
+
+
+@app.get("/api/config", tags=["Config Admin"])
+async def get_config():
+    """Get full config.json."""
+    try:
+        return load_full_config()
+    except Exception as e:
+        logger.error(f"Error reading config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/config", tags=["Config Admin"])
+async def update_config(request: Request):
+    """Update full config.json."""
+    try:
+        body = await request.json()
+        save_full_config(body)
+        return {"message": "Config saqlandi"}
+    except Exception as e:
+        logger.error(f"Error saving config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/config/not-allowed-sites", tags=["Config Admin"])
+async def add_not_allowed_site(request: Request):
+    """Add a site to not_allowed_sites."""
+    try:
+        body = await request.json()
+        site = body.get("site", "").strip()
+        if not site:
+            raise HTTPException(status_code=400, detail="Site bo'sh bo'lishi mumkin emas")
+
+        config = load_full_config()
+        image_config = config.setdefault("image", {})
+        sites = image_config.get("not_allowed_sites", [])
+        if site not in sites:
+            sites.append(site)
+            image_config["not_allowed_sites"] = sites
+            config["image"] = image_config
+            save_full_config(config)
+        return {"message": "Qo'shildi", "sites": sites}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding site: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/config/not-allowed-sites", tags=["Config Admin"])
+async def delete_not_allowed_site(site: str):
+    """Remove a site from not_allowed_sites."""
+    try:
+        config = load_full_config()
+        image_config = config.get("image", {})
+        sites = image_config.get("not_allowed_sites", [])
+        if site in sites:
+            sites = [s for s in sites if s != site]
+            image_config["not_allowed_sites"] = sites
+            config["image"] = image_config
+            save_full_config(config)
+        return {"message": "O'chirildi", "sites": sites}
+    except Exception as e:
+        logger.error(f"Error deleting site: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/mxik-data", tags=["MXIK Management"])

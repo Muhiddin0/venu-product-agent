@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="uz" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Config boshqaruvi</title>
+    <link
+      rel="icon"
+      href="https://venu.uz/favicon.ico?favicon.0e950d5c.ico"
+      type="image/x-icon"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              dark: { bg: "#0f172a", panel: "rgba(30, 41, 59, 0.7)", border: "rgba(148, 163, 184, 0.1)" },
+              primary: "#3b82f6",
+              accent: "#8b5cf6",
+            },
+            fontFamily: { sans: ["Inter", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        body {
+          @apply bg-[#0f172a] text-slate-200 min-h-screen font-sans antialiased;
+          background-image:
+            radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+            radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+            radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+        }
+      }
+      @layer components {
+        .glass-panel {
+          @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl;
+        }
+        .btn-primary {
+          @apply px-6 py-2 bg-gradient-to-r from-primary to-accent text-white font-semibold rounded-xl hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+        .btn-secondary {
+          @apply px-6 py-2 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all active:scale-[0.98];
+        }
+        .input-field {
+          @apply bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary focus:bg-black/40 transition-all w-full;
+        }
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-8">
+    <div class="glass-panel w-full max-w-2xl mx-auto min-h-[80vh] flex flex-col overflow-hidden bg-slate-900/60">
+      <header class="p-6 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <a href="/" class="text-3xl bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">⚙️</a>
+          <h1 class="text-xl font-bold tracking-tight text-white">Config boshqaruvi</h1>
+          <a href="/" class="ml-4 px-4 py-2 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 text-sm">
+            <span>🏠</span>
+            <span>Asosiy sahifa</span>
+          </a>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-auto p-6 space-y-6">
+        <section class="space-y-4">
+          <h2 class="text-lg font-semibold text-white">Taqiqlangan saytlar (not_allowed_sites)</h2>
+          <p class="text-sm text-slate-400">Rasm qidirishda shu saytlardan kelgan rasmlar qabul qilinmaydi.</p>
+
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="new-site-input"
+              class="input-field flex-1"
+              placeholder="Masalan: example.com"
+            />
+            <button id="add-site-btn" class="btn-primary">Qo'shish</button>
+          </div>
+
+          <ul id="sites-list" class="space-y-2">
+            <li class="text-slate-500 text-sm">Yuklanmoqda...</li>
+          </ul>
+        </section>
+
+        <section class="space-y-2">
+          <h2 class="text-lg font-semibold text-white">To'liq config.json</h2>
+          <textarea
+            id="raw-config"
+            class="input-field font-mono text-sm min-h-[200px]"
+            placeholder='{"image": {"not_allowed_sites": []}}'
+          ></textarea>
+          <div class="flex gap-2">
+            <button id="save-raw-btn" class="btn-primary">Saqlash</button>
+            <button id="reload-btn" class="btn-secondary">Qayta yuklash</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      async function loadConfig() {
+        try {
+          const res = await fetch("/api/config");
+          const config = await res.json();
+          const sites = config?.image?.not_allowed_sites || [];
+          renderSites(sites);
+          document.getElementById("raw-config").value = JSON.stringify(config, null, 2);
+        } catch (e) {
+          console.error(e);
+          document.getElementById("sites-list").innerHTML =
+            '<li class="text-red-400">Ma\'lumotlarni yuklab bo\'lmadi</li>';
+        }
+      }
+
+      function renderSites(sites) {
+        const ul = document.getElementById("sites-list");
+        if (sites.length === 0) {
+          ul.innerHTML = '<li class="text-slate-500">Hali sayt qo\'shilmagan</li>';
+          return;
+        }
+        ul.innerHTML = sites
+          .map(
+            (s) => `
+          <li class="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2 group">
+            <span class="font-mono text-sm">${escapeHtml(s)}</span>
+            <button class="delete-site-btn text-slate-500 hover:text-red-400 p-1 transition-colors" data-site="${escapeHtml(s)}">🗑️</button>
+          </li>
+        `
+          )
+          .join("");
+        ul.querySelectorAll(".delete-site-btn").forEach((btn) => {
+          btn.addEventListener("click", () => deleteSite(btn.dataset.site));
+        });
+      }
+
+      function escapeHtml(s) {
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      document.getElementById("add-site-btn").addEventListener("click", async () => {
+        const input = document.getElementById("new-site-input");
+        const site = input.value.trim();
+        if (!site) {
+          alert("Sayt nomini kiriting");
+          return;
+        }
+        try {
+          const res = await fetch("/api/config/not-allowed-sites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ site }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            input.value = "";
+            loadConfig();
+          } else {
+            alert(data.detail || "Xatolik");
+          }
+        } catch (e) {
+          alert("Serverga ulanishda xatolik");
+        }
+      });
+
+      async function deleteSite(site) {
+        if (!confirm(`"${site}" ni o'chirishga aminmisiz?`)) return;
+        try {
+          const res = await fetch(`/api/config/not-allowed-sites?site=${encodeURIComponent(site)}`, {
+            method: "DELETE",
+          });
+          const data = await res.json();
+          if (res.ok) {
+            loadConfig();
+          } else {
+            alert(data.detail || "Xatolik");
+          }
+        } catch (e) {
+          alert("Serverga ulanishda xatolik");
+        }
+      }
+
+      document.getElementById("save-raw-btn").addEventListener("click", async () => {
+        const raw = document.getElementById("raw-config").value.trim();
+        let config;
+        try {
+          config = JSON.parse(raw);
+        } catch (e) {
+          alert("Noto'g'ri JSON format");
+          return;
+        }
+        try {
+          const res = await fetch("/api/config", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(config),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            alert("Saqlandi!");
+            loadConfig();
+          } else {
+            alert(data.detail || "Xatolik");
+          }
+        } catch (e) {
+          alert("Serverga ulanishda xatolik");
+        }
+      });
+
+      document.getElementById("reload-btn").addEventListener("click", () => loadConfig());
+
+      document.getElementById("new-site-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") document.getElementById("add-site-btn").click();
+      });
+
+      loadConfig();
+    </script>
+  </body>
+</html>

@@ -1,20 +1,32 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: 6vally-product-agent
+    container_name: venu-product-agent
     ports:
       - "56234:56234"
     env_file:
       - .env
     volumes:
+      # Mount source code for real-time changes (development)
+      - .:/app
       # Mount media directories to persist data
       - ./media:/app/media
       - ./api/mxik-codes.xlsx:/app/api/mxik-codes.xlsx
       - ./temps:/app/temps
+    command:
+      [
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "56234",
+        "--reload",
+      ]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:56234/health"]

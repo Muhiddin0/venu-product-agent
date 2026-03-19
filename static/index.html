@@ -74,7 +74,9 @@
       class="glass-panel w-full max-w-6xl min-h-[85vh] flex flex-col overflow-hidden bg-slate-900/60"
     >
       <!-- Header -->
-      <header class="p-6 border-b border-white/10 flex items-center justify-between">
+      <header
+        class="p-6 border-b border-white/10 flex items-center justify-between"
+      >
         <div class="flex items-center gap-4">
           <div
             class="text-3xl bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent transform hover:scale-110 transition-transform cursor-default"
@@ -85,13 +87,22 @@
             6Valley Product AI Agent
           </h1>
         </div>
-        <a
-          href="/static/mxik.html"
-          class="px-4 py-2 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all active:scale-[0.98] flex items-center gap-2"
-        >
-          <span>📋</span>
-          <span>MXIK Kodlar</span>
-        </a>
+        <div class="flex gap-2">
+          <a
+            href="/static/mxik.html"
+            class="px-4 py-2 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all active:scale-[0.98] flex items-center gap-2"
+          >
+            <span>📋</span>
+            <span>MXIK Kodlar</span>
+          </a>
+          <a
+            href="/config"
+            class="px-4 py-2 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition-all active:scale-[0.98] flex items-center gap-2"
+          >
+            <span>⚙️</span>
+            <span>Config</span>
+          </a>
+        </div>
       </header>
 
       <div class="flex flex-1 overflow-hidden">

@@ -1,0 +1,5 @@
+{
+  "image": {
+    "not_allowed_sites": ["olx.uz", "olcha.uz", "olxcdn.com"]
+  }
+}

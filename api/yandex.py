@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 import hashlib
 
 
-from core.config import settings
+from core.config import get_not_allowed_sites, settings
 from core.openai_client import get_openai_client
 
 logger = logging.getLogger(__name__)
@@ -91,7 +91,17 @@ class ProductImage:
 
             data = json.loads(image_urls_str)
 
-            return data.get("image_urls", [])
+            image_urls = data.get("image_urls", [])
+
+            # Filter out URLs from not_allowed_sites (safety check after AI)
+            not_allowed = get_not_allowed_sites()
+            if not_allowed:
+                image_urls = [
+                    url for url in image_urls
+                    if not any(site in url.lower() for site in not_allowed)
+                ]
+
+            return image_urls
 
         except Exception as e:
             logger.error(f"Error filtering images with AI: {e}", exc_info=True)
@@ -127,7 +137,6 @@ class ProductImage:
             "dpr": "1.25",
             "ect": "4g",
             "priority": "u=1, i",
-            # "referer": f"https://yandex.ru/images/search?text={quote(search_text)}",
             "rtt": "100",
             "sec-ch-ua": '"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
             "sec-ch-ua-arch": '"x86"',
@@ -178,13 +187,12 @@ class ProductImage:
         data = response.json()
 
         images = self.extract_images(data=data)
-        pure_images = []
-
-        for image in images:
-            if not "olxcdn.com" in image["url"]:
-                pure_images.append(image["url"])
-        
-        return images
+        not_allowed = get_not_allowed_sites()
+        filtered = [
+            img for img in images
+            if not any(site in img["url"].lower() for site in not_allowed)
+        ]
+        return filtered
 
     def extract_images(self, data):
         """
